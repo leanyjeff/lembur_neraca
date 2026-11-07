@@ -1,0 +1,38 @@
+PANDUAN MEMASANG "LEMBUR NERACA" DI HP ANDROID
+==============================================
+
+Isi folder ini:
+  index.html             -> halaman aplikasi (HANYA file ini yang perlu diedit)
+  manifest.webmanifest   -> "KTP" aplikasi: nama, ikon, warna
+  sw.js                  -> service worker, syarat agar bisa di-install
+  ikon/                  -> ikon aplikasi di layar HP
+
+LANGKAH 1 - Isi link Web App
+  Buka index.html dengan Notepad, cari baris:
+     var URL_APLIKASI = "https://script.google.com/macros/s/GANTI_DENGAN_ID_ANDA/exec";
+  Ganti dengan link Web App Lembur Neraca Anda (yang berakhiran /exec). Simpan.
+
+LANGKAH 2 - Pastikan deployment Apps Script
+  Apps Script -> Terapkan -> Kelola deployment:
+     Jalankan sebagai : Saya
+     Yang memiliki akses : Siapa saja
+  (Kalau "Siapa saja yang memiliki Akun Google", aplikasi di HP bisa gagal terbuka.)
+
+LANGKAH 3 - Upload folder ke hosting HTTPS (pilih salah satu)
+  A. Hosting sendiri (cPanel) -> File Manager -> buat folder, mis. public_html/lembur
+     -> upload SEMUA isi folder ini (termasuk folder ikon).
+     Alamatnya nanti mis. https://bpsmaluku.com/lembur/
+  B. GitHub Pages (gratis) -> buat repository baru -> Add file -> Upload files
+     -> upload semua isi folder -> Settings -> Pages -> Branch: main -> Save.
+     Alamatnya: https://NAMA-AKUN.github.io/NAMA-REPO/
+  Wajib HTTPS (ada gembok di alamat), kalau tidak tombol Install tidak muncul.
+
+LANGKAH 4 - Install di HP
+  Buka alamat tadi di Google Chrome HP -> tunggu aplikasi terbuka
+  -> ketuk menu titik tiga -> "Instal aplikasi" / "Tambahkan ke layar utama" -> Instal.
+  Ikon "Lembur" muncul di layar HP. Dibuka tanpa bilah alamat browser.
+
+CATATAN
+  - Kalau nanti Code.gs / Index diperbarui, aplikasi di HP ikut terbaru otomatis
+    (tidak perlu install ulang), selama link /exec tetap sama.
+  - Aplikasi butuh internet karena data langsung dari Spreadsheet.

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lembur Neraca</title>
+<meta name="description" content="Aplikasi rekap lembur Fungsi Neraca BPS Provinsi Maluku">
+<meta name="theme-color" content="#0b3a47">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lembur Neraca">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="ikon/favicon-32.png">
+<link rel="apple-touch-icon" href="ikon/apple-touch-icon.png">
+<script>
+  /* =====================================================================
+     GANTI LINK DI BAWAH INI dengan link Web App Apps Script Anda
+     (yang berakhiran /exec). Hanya baris ini yang perlu diubah.
+     ===================================================================== */
+  var URL_APLIKASI = "https://script.google.com/macros/s/http://s.bps.go.id/lembur_neraca/exec";
+</script>
+<style>
+  :root{--bg:#06202a;--bg2:#0b3a47;--sea:#3cc4c0;--ink:#ffffff;--muted:rgba(255,255,255,.72)}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+  #bingkai{position:fixed;inset:0;width:100%;height:100%;border:0;background:#fff;
+    opacity:0;transition:opacity .35s ease}
+  #bingkai.siap{opacity:1}
+  .layar{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:18px;padding:24px;text-align:center;
+    background:radial-gradient(600px 320px at 85% 0%,rgba(34,179,173,.45),transparent 70%),
+               radial-gradient(480px 280px at 0% 100%,rgba(239,111,76,.3),transparent 70%),
+               linear-gradient(150deg,var(--bg2),var(--bg));
+    transition:opacity .35s ease}
+  .layar[hidden]{display:none}
+  .layar.pudar{opacity:0;pointer-events:none}
+  .layar img{width:96px;height:96px;border-radius:24px;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+  .layar h1{margin:0;font-size:24px;font-weight:800;letter-spacing:-.01em}
+  .layar p{margin:0;color:var(--muted);font-size:14px;max-width:32ch;line-height:1.5}
+  .putar{width:30px;height:30px;border-radius:50%;border:3px solid rgba(255,255,255,.2);border-top-color:var(--sea);
+    animation:putar .8s linear infinite}
+  @keyframes putar{to{transform:rotate(360deg)}}
+  .tombol{display:inline-flex;gap:8px;align-items:center;border:0;border-radius:12px;padding:12px 18px;
+    font:700 14px/1 inherit;cursor:pointer;background:var(--sea);color:#05252c;text-decoration:none}
+  .tombol.garis{background:transparent;color:var(--ink);border:1px solid rgba(255,255,255,.3)}
+  .baris{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  #lambat{opacity:0;transition:opacity .4s}
+  #lambat.tampil{opacity:1}
+</style>
+</head>
+<body>
+
+<iframe id="bingkai" title="Lembur Neraca" allow="clipboard-read; clipboard-write; fullscreen"></iframe>
+
+<!-- Layar pembuka (muncul selama aplikasi dimuat) -->
+<div class="layar" id="layarMuat">
+  <img src="ikon/ikon-192.png" alt="">
+  <h1>Lembur Neraca</h1>
+  <p>BPS Provinsi Maluku · Fungsi Neraca</p>
+  <div class="putar" aria-label="Memuat"></div>
+  <div id="lambat" class="baris">
+    <p style="width:100%">Koneksi agak lambat…</p>
+    <button class="tombol garis" type="button" onclick="muat()">Muat ulang</button>
+    <a class="tombol garis" id="bukaBrowser" target="_blank" rel="noopener">Buka di browser</a>
+  </div>
+</div>
+
+<!-- Layar tanpa internet -->
+<div class="layar" id="layarOffline" hidden>
+  <img src="ikon/ikon-192.png" alt="">
+  <h1>Tidak ada internet</h1>
+  <p>Lembur Neraca membutuhkan koneksi internet karena data diambil langsung dari Spreadsheet.</p>
+  <button class="tombol" type="button" onclick="muat()">Coba lagi</button>
+</div>
+
+<!-- Layar jika link belum diisi -->
+<div class="layar" id="layarAtur" hidden>
+  <img src="ikon/ikon-192.png" alt="">
+  <h1>Link belum diisi</h1>
+  <p>Buka file <b>index.html</b>, lalu isi <b>URL_APLIKASI</b> dengan link Web App Apps Script (berakhiran /exec).</p>
+</div>
+
+<script>
+  var bingkai = document.getElementById("bingkai");
+  var layarMuat = document.getElementById("layarMuat");
+  var layarOffline = document.getElementById("layarOffline");
+  var lambat = document.getElementById("lambat");
+  var penunda = null;
+
+  document.getElementById("bukaBrowser").href = URL_APLIKASI;
+
+  function muat() {
+    layarOffline.hidden = true;
+    if (URL_APLIKASI.indexOf("GANTI_DENGAN") !== -1) {
+      layarMuat.hidden = true;
+      document.getElementById("layarAtur").hidden = false;
+      return;
+    }
+    if (!navigator.onLine) {
+      layarMuat.hidden = true;
+      layarOffline.hidden = false;
+      return;
+    }
+    layarMuat.hidden = false;
+    layarMuat.classList.remove("pudar");
+    lambat.classList.remove("tampil");
+    bingkai.classList.remove("siap");
+    clearTimeout(penunda);
+    penunda = setTimeout(function () { lambat.classList.add("tampil"); }, 12000);
+    bingkai.src = URL_APLIKASI;
+  }
+
+  bingkai.addEventListener("load", function () {
+    if (!bingkai.src) return;
+    clearTimeout(penunda);
+    bingkai.classList.add("siap");
+    layarMuat.classList.add("pudar");
+    setTimeout(function () { layarMuat.hidden = true; }, 400);
+  });
+
+  window.addEventListener("offline", function () { layarOffline.hidden = false; });
+  window.addEventListener("online", function () { if (!layarOffline.hidden) muat(); });
+
+  muat();
+
+  /* Service worker: syarat agar bisa dipasang sebagai aplikasi */
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    });
+  }
+</script>
+</body>
+</html>
